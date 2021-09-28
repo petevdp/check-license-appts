@@ -12,7 +12,7 @@ export interface LockedAppointment {
   officeNum:       number;
   posName:         string;
   bookedIndicator: string;
-  bookedTs:        Date;
+  bookedTs:        string;
   statusCode:      string;
   drvrDriver:      DrvrDriver;
   drscDrvSchl:     DrscDrvSchl;

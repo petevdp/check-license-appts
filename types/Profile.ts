@@ -8,8 +8,8 @@ export interface RawProfile {
     email: string;
     locationsToCheck: number[];
     examType: string;
-    earliestExamDate: Date;
-    latestExamDate: Date;
+    earliestExamDate: string;
+    latestExamDate: string;
 
     maxSearchDuration?: string;
     stopSearchOnConfirmation?: boolean;

@@ -15,3 +15,9 @@ export function parseTimeToMs(timeStr: string): number {
   }
   throw new Error(`Could not parse time string ${timeStr}`);
 }
+
+export function later(delayMs: number) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, delayMs);
+  });
+}

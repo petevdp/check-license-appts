@@ -1,7 +1,7 @@
 export interface GetAvailableAppointmentsPayload {
   aPosID: number;
   examType: string;
-  examDate: Date;
+  examDate: string;
   ignoreReserveTime: boolean;
   prfDaysOfWeek: number[];
   prfPartsOfDay: number[];

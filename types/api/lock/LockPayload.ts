@@ -7,7 +7,7 @@ export interface LockPayload {
   drvrDriver:      DrvrDriver;
   drscDrvSchl:     DrscDrvSchl;
   instructorDlNum: null;
-  bookedTs:        Date;
+  bookedTs:        string;
   startTm:         string;
   endTm:           string;
   posId:           number;

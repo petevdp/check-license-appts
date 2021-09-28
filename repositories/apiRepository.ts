@@ -1,4 +1,5 @@
 import { AllLoginInfo } from "../AllLoginInfo.ts";
+import { dateToString, utcDate } from "https://deno.land/x/date_format_deno/mod.ts";
 import { LoginResponse } from "../types/api/login/loginResponse.ts";
 import { GetAvailableAppointmentsPayload } from "../types/api/getAvailableAppointments/GetAvailableAppointmentsPayload.ts";
 import { GetAvailableAppointmentsResponse } from "../types/api/getAvailableAppointments/GetAvailableAppointmentsResponse.ts";
@@ -21,15 +22,16 @@ async function wrappedFetch(input: Request | URL | string, init?: RequestInit): 
     method = init?.method;
     payload = init?.body?.toString();
   }
-  
+
   try {
-    payload = JSON.parse(payload || '');
-  } catch(exception) {
-  }
+    payload = JSON.parse(payload || "");
+  } catch (exception) {}
 
   console.log(`${method} ${new URL(url).pathname}`);
   const res = await fetch(input, init);
-  console.log(`${method} ${new URL(url).pathname}} response status: ${res.status} ${res.statusText})`);
+  console.log(
+    `${method} ${new URL(url).pathname}} response status: ${res.status} ${res.statusText})`
+  );
   if (!res.ok) {
     console.log({ payload: payload, response: await res.text() });
   }
@@ -103,6 +105,29 @@ export async function getAvailableAppointments(
   return resBody as GetAvailableAppointmentsResponse;
 }
 
+export async function sendMsgs(ctx: BookingContext) {
+  await wrappedFetch("https://onlinebusiness.icbc.com/deas-api/v1/web/msgs", {
+    headers: {
+      accept: "application/json, text/plain, */*",
+      authorization: ctx.bearerToken,
+      "content-type": "application/json",
+      "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"Linux"',
+    },
+    referrer: "https://onlinebusiness.icbc.com/webdeas-ui/booking",
+    referrerPolicy: "strict-origin-when-cross-origin",
+    body: JSON.stringify({
+      aPosID: ctx.availableAppointment.posId,
+      lemgMsgID: ctx.availableAppointment.lemgMsgId,
+      appointmentDt: ctx.availableAppointment.appointmentDt.date,
+    }),
+    method: "POST",
+    mode: "cors",
+    credentials: "include",
+  });
+}
+
 export async function lockAppointment(ctx: BookingContext): Promise<LockedAppointment> {
   const body: LockPayload = {
     appointmentDt: ctx.availableAppointment.appointmentDt,
@@ -110,32 +135,66 @@ export async function lockAppointment(ctx: BookingContext): Promise<LockedAppoin
     drvrDriver: { drvrId: ctx.driver.drvrId },
     drscDrvSchl: {},
     instructorDlNum: null,
-    bookedTs: new Date(),
+    bookedTs: formatTimestamp(new Date()),
     startTm: ctx.availableAppointment.startTm,
     endTm: ctx.availableAppointment.endTm,
     posId: ctx.availableAppointment.posId,
     resourceId: ctx.availableAppointment.resourceId,
   };
+
   const res = await wrappedFetch("https://onlinebusiness.icbc.com/deas-api/v1/web/lock", {
     headers: {
       accept: "application/json, text/plain, */*",
+      "accept-language": "en-US,en;q=0.9",
       authorization: ctx.bearerToken,
       "content-type": "application/json",
-      "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+      "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
       "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"Linux"',
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
     },
     referrer: "https://onlinebusiness.icbc.com/webdeas-ui/booking",
     referrerPolicy: "strict-origin-when-cross-origin",
     body: JSON.stringify(body),
     method: "PUT",
     mode: "cors",
+    credentials: "include",
   });
 
   return await parseJSONOrShowText(res);
 }
 
-export function sendOTP(ctx: AppointmentLockedContext) {
-  throw new Error("Function not implemented.");
+export async function sendOTP(ctx: AppointmentLockedContext) {
+  const res = await wrappedFetch("https://onlinebusiness.icbc.com/deas-api/v1/web/sendOTP", {
+    headers: {
+      accept: "application/json, text/plain, */*",
+      "accept-language": "en-US,en;q=0.9",
+      authorization: ctx.bearerToken,
+      "content-type": "application/json",
+      "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"Linux"',
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+    },
+    referrer: "https://onlinebusiness.icbc.com/webdeas-ui/booking",
+    referrerPolicy: "strict-origin-when-cross-origin",
+    body: JSON.stringify({
+      bookedTs: ctx.lockedAppointment.bookedTs,
+      drvrID: ctx.driver.drvrId,
+      method: "E",
+    }),
+    method: "POST",
+    mode: "cors",
+    credentials: "include",
+  });
+}
+
+function formatTimestamp(ts: Date) {
+  return dateToString("yyyy-MM-ddThh:mm:ss", new Date());
 }
 
 async function parseJSONOrShowText(res: Response) {
