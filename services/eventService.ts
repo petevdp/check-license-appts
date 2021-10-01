@@ -12,7 +12,6 @@ export class EventService {
       context: baseContext,
     });
     this.isPolling$ = new StatefulEvt<boolean>(false);
-    this.state$.attach(() => console.log(`\nfiring state$`));
   }
 
   destroy() {

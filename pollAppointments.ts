@@ -79,9 +79,9 @@ async function fetchAndBookAppointments(eventService: EventService) {
   }
 
   const bookingContext: BookingContext = { ...loginContext, availableAppointment: appointments[0] };
-  const lockedAppointment = await Api.lockAppointment(bookingContext)
+  const lockedAppointment = await Api.lockAppointment(bookingContext);
   const ctx: AppointmentLockedContext = { ...bookingContext, lockedAppointment };
-  await Api.sendOTP(ctx)
+  await Api.sendOTP(ctx);
   eventService.state$.post({ type: "appointmentLocked", context: ctx });
 }
 
@@ -96,15 +96,14 @@ async function fetchCompatibleAppointments(ctx: LoginContext) {
     lastName: ctx.profile.lastname.toUpperCase(), // not sure why we do this, may not be necessary
     licenseNumber: ctx.profile.licenseNumber,
   };
-  let allAvailableAppointments: GetAvailableAppointmentsResponse = [];
-  for await (const location of ctx.profile.locationsToCheck) {
-    const res = await Api.getAvailableAppointments(
-      { ...baseAppointmentQueryPayload, aPosID: location },
-      ctx.bearerToken
-    );
-    allAvailableAppointments = [...allAvailableAppointments, ...res];
-  }
-  console.log(allAvailableAppointments);
+  const allAvailableAppointments = await Promise.all(
+    ctx.profile.locationsToCheck.map((location) =>
+      Api.getAvailableAppointments(
+        { ...baseAppointmentQueryPayload, aPosID: location },
+        ctx.bearerToken
+      )
+    )
+  ).then((appts) => appts.flat());
   return [...allAvailableAppointments].filter((appointment) => {
     const date = Number(new Date(appointment.appointmentDt.date));
     const earliest = Number(new Date(ctx.profile.earliestExamDate));

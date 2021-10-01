@@ -49,7 +49,6 @@ export class WebService {
       });
 
       clientEvent$.attach(wsCtx, async (event) => {
-        console.log(event);
         if (!event) {
           return;
         }

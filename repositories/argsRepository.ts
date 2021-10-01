@@ -30,7 +30,6 @@ const PROFILE_PROPERTIES: (keyof RawProfile)[] = [
 
 export async function parseProfileArgs(args: ProfileArgs): Promise<Profile> {
   let profile: Profile | null = null;
-  console.log({args});
   if (args.configPath) {
     profile = normalizeProfileInput(await readJsonFile<Profile>(args.configPath));
   }
@@ -43,7 +42,6 @@ export async function parseProfileArgs(args: ProfileArgs): Promise<Profile> {
   for (let [k, v] of Object.entries(args).filter(([k]) => PROFILE_PROPERTIES.includes(k as keyof RawProfile))) {
     argsProfile[k] = v;
   }
-  console.log({argsProfile, profile});
   profile = { ...profile, ...normalizeProfileInput(argsProfile) };
   if (!profile) {
     throw new Error();

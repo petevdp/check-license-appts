@@ -3,6 +3,9 @@ export function parseTimeToMs(timeStr: string): number {
     throw new Error(`Could not parse time string ${timeStr}`);
   }
   let raw = Number(timeStr.slice(0, timeStr.length - 1));
+  if (timeStr.endsWith("ms")) {
+    return raw;
+  }
   if (timeStr.endsWith("s")) {
     return raw * 1000;
   }
