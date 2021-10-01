@@ -7,5 +7,6 @@ export const PROFILE_DEFAULTS = {
   webPort: 3000,
   pollOnce: false,
   pollInterval: "3s",
-  environment: "production"
+  environment: "production",
+  noBooking: false,
 }

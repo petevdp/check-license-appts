@@ -19,7 +19,8 @@ export type ServerEvent =
       appointment: ClientSideAppointment;
     }
   | {
-      type: "appointmentBooked";
+      type: "appointmentConfirmed";
+      appointment: ClientSideAppointment;
     }
   | {
       type: "init";

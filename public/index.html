@@ -17,7 +17,7 @@
         display: none !important;
       }
 
-      #status {
+      #head {
         grid-area: head;
         text-align: center;
       }
@@ -54,33 +54,87 @@
 
       .bottom-panel {
         grid-area: foot;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        align-content: center;
       }
 
       .bottom-panel > * {
-        float: right;
+        margin-left: 10px;
+        height: min-content;
+        text-align: center;
+      }
+
+      .lds-ripple-container {
+        width: 40px;
+        height: 40px;
+        overflow: visible;
+        display: flex;
+        align-items: center;
+      }
+
+      /* UTILS */
+      .lds-ripple {
+        --scale: 0.5;
+        transform: scale(var(--scale));
+        display: inline-block;
+        position: relative;
+        width: 80px;
+        height: 80px;
+      }
+      .lds-ripple div {
+        position: absolute;
+        border: 4px solid red;
+        opacity: 1;
+        border-radius: 50%;
+        animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+      }
+      .lds-ripple div:nth-child(2) {
+        animation-delay: -0.5s;
+      }
+      @keyframes lds-ripple {
+        0% {
+          top: 36px;
+          left: 36px;
+          width: 0;
+          height: 0;
+          opacity: 1;
+        }
+        100% {
+          top: 0px;
+          left: 0px;
+          width: 72px;
+          height: 72px;
+          opacity: 0;
+        }
       }
     </style>
   </head>
   <body>
     <div class="center-container">
-      <h1 id="status">
-        Searching
-        <span id="search-spinner">...</span>
-      </h1>
+      <h1 id="head">Searching</h1>
       <div id="appointment-card-skeleton" class="card"></div>
       <section id="appointment-card" class="card">
         <span id="appt-location"></span>
         <span id="appt-date"></span>
         <span id="appt-time"></span>
         <span id="appt-type"></span>
+        <form id="code-form">
+          <label>Confirmation Code</label>
+          <input id="appt-code" type="text" value="" />
+          <button type="submit">submit</button>
+        </form>
       </section>
-      <form id="code-form">
-        <label>Confirmation Code</label>
-        <input id="appt-code" type="text" value="" />
-        <button type="submit">submit</button>
-      </form>
       <div class="bottom-panel">
-        <button id="stop-search-btn">Stop</button>
+        <div class="lds-ripple-container search" >
+          <div class="lds-ripple">
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+        <button id="stop-search-btn" class="search">Stop Searching</button>
+        <div id="search-stopped-text" class="hidden">Search Stopped.</div>
       </div>
     </div>
     <script src="//unpkg.com/evt/bundle.min.js"></script>
@@ -98,12 +152,15 @@
           cardSkeleton: document.getElementById("appointment-card-skeleton"),
         },
         codeForm: document.getElementById("code-form"),
-        status: document.getElementById("status"),
-        searchSpinner: document.getElementById("search-spinner"),
+        head: document.getElementById("head"),
+        searchPanelElts: document.querySelectorAll(".search"),
+        searchStoppedText: document.getElementById("search-stopped-text"),
         stopSearchButton: document.getElementById("stop-search-btn"),
+        searchStatusText: document.getElementById("search-status-text"),
       };
       console.log({ elts });
       let storedAppointmentState = null;
+      let isPollingState;
 
       const clientEvent$ = new Evt();
 
@@ -138,26 +195,38 @@
         console.log(serverEvent.type, ":", serverEvent);
         switch (serverEvent.type) {
           case "init":
-            handleSearchSpinnerChange(serverEvent.isPolling);
             renderAppointmentStateChange(serverEvent.appointmentState);
+            renderSearchEltsChange(serverEvent.isPolling);
+            isPollingState = serverEvent.isPolling;
+            appointmentState = serverEvent.appointmentState;
             break;
           case "appointmentFound":
-            handleStatusTextChange("found", serverEvent.isPolling);
+            handleTitleTextChange("found", isPollingState);
             renderAppointmentStateChange({ state: "found", appointment: serverEvent.appointment });
             break;
-          case "appointmentBooked":
+          case "appointmentConfirmed":
             if (!storedAppointmentState) {
               throw new Error("appointment state not set before booking");
             }
-            handleStatusTextChange("booked", serverEvent.isPolling);
+            handleTitleTextChange("booked", isPollingState);
             break;
           case "pollingStopped":
-            handleSearchSpinnerChange(false);
+            renderSearchEltsChange(serverEvent.isPolling);
             break;
         }
       }
 
-      function handleStatusTextChange(state, isPolling) {
+      function renderSearchEltsChange(isPolling) {
+        if (isPolling) {
+          setHidden(elts.searchStoppedText);
+          [...elts.searchPanelElts].map(e => unsetHidden(e))
+        } else {
+          [...elts.searchPanelElts].map(e => setHidden(e))
+          unsetHidden(elts.searchStoppedText);
+        }
+      }
+
+      function handleTitleTextChange(state, isPolling) {
         switch (state) {
           case "found":
             renderStatus("Appointment Found");
@@ -173,11 +242,6 @@
             }
             break;
         }
-      }
-
-      function handleSearchSpinnerChange(isPolling) {
-        const spinner = elts.searchSpinner;
-        spinner.hidden = !isPolling;
       }
 
       function renderAppointmentStateChange(appointmentState) {
@@ -206,7 +270,7 @@
       function renderAppointmentSkeleton() {}
 
       function renderStatus(message) {
-        elts.status.innerText = message;
+        elts.head.innerText = message;
       }
       function renderSearching(isSearching) {}
       function setHidden(elt) {

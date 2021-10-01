@@ -11,6 +11,7 @@ async function main() {
   const eventService = new EventService({profile});
   const webService = new WebService(eventService)
   webService.startServer();
+  webService.startWebsocketServer();
   pollAppointments(eventService);
 }
 

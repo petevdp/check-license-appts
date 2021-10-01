@@ -18,12 +18,7 @@ export class WebService {
     this.app = new Application();
   }
 
-  startServer() {
-    this.app
-      .use(logger())
-      .file("/", "./public/index.html")
-      .start({ port: this.eventService.state$.state.context.profile.webPort });
-
+  startWebsocketServer() {
     const wss = new WebSocketServer(8080);
 
     const clientEvent$ = new Evt<ClientEvent | false>();
@@ -62,6 +57,7 @@ export class WebService {
             const state = this.eventService.state$.state;
             if (state.type === "appointmentLocked") {
               await Api.confirmAppointment(event.code, state.context);
+              this.eventService.state$.post({type: "appointmentConfirmed", context: state.context})
             } else {
               console.warn(`tried to submit code during invalid state '${state.type}'`);
             }
@@ -85,6 +81,13 @@ export class WebService {
       serverEvent$.post(initEvent);
     });
   }
+
+  startServer() {
+    this.app
+      .use(logger())
+      .file("/", "./public/index.html")
+      .start({ port: this.eventService.state$.state.context.profile.webPort });
+  }
 }
 
 function getServerEventFromStateChange(curr: State, prev: State): [ServerEvent] | null {
@@ -99,6 +102,15 @@ function getServerEventFromStateChange(curr: State, prev: State): [ServerEvent] 
       },
     ];
   }
+  if (curr.type === "appointmentConfirmed") {
+    return [
+      {
+        type: "appointmentConfirmed",
+        appointment: getClientSideAppointment(curr.context.lockedAppointment),
+      }
+    ];
+  } 
+  
   return null;
 }
 
@@ -122,5 +134,11 @@ function selectAppointmentState(state: State): AppointmentState {
         state: "found",
         appointment: getClientSideAppointment(state.context.lockedAppointment),
       };
+    case "appointmentConfirmed": {
+      return {
+        state: "booked",
+        appointment: getClientSideAppointment(state.context.lockedAppointment),
+      };
+    }
   }
 }

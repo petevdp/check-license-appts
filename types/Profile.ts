@@ -16,6 +16,7 @@ export interface RawProfile {
   pollOnce?: boolean;
   pollInterval?: string;
   environment?: "production" | "development";
+  noBooking?: boolean;
 }
 
 export interface Profile extends RawProfile {
@@ -27,4 +28,5 @@ export interface Profile extends RawProfile {
   webPort: number;
   pollOnce: boolean;
   pollInterval: string;
+  noBooking: boolean;
 }

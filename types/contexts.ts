@@ -31,5 +31,8 @@ export type State = {
 } | {
   type: "appointmentLocked"
   context: AppointmentLockedContext;
+} | {
+  type: "appointmentConfirmed",
+  context: AppointmentLockedContext;
 }
 

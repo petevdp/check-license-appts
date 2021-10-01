@@ -48,6 +48,7 @@ async function fetchAndBookAppointments(eventService: EventService) {
           return;
         }
       case "loggedIn":
+      case "appointmentConfirmed":
         loginContext = state.context;
         break;
     }
@@ -81,7 +82,9 @@ async function fetchAndBookAppointments(eventService: EventService) {
   const bookingContext: BookingContext = { ...loginContext, availableAppointment: appointments[0] };
   const lockedAppointment = await Api.lockAppointment(bookingContext);
   const ctx: AppointmentLockedContext = { ...bookingContext, lockedAppointment };
-  await Api.sendOTP(ctx);
+  if (!bookingContext.profile.noBooking) {
+    await Api.sendOTP(ctx);
+  }
   eventService.state$.post({ type: "appointmentLocked", context: ctx });
 }
 
@@ -135,7 +138,6 @@ const compareAppointments =
     return 0;
   };
 
-async function confirmBooking(bookingContext: BookingContext, eventService: EventService) {}
 
 function linkVerificationUrl(ctx: BookingContext) {
   console.log(

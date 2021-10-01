@@ -20,6 +20,7 @@ export async function login(profile: Profile): Promise<LoginContext> {
     ...getStandardFetchInit(),
     headers: {
       ...getStandardHeaders(),
+      // not sure why these were included. they came ffrom chrome
       "cache-control": "no-cache, no-store",
       expires: "0",
       pragma: "no-cache",
@@ -161,7 +162,7 @@ async function wrappedFetch(input: Request | URL | string, init?: RequestInit): 
 
   payload = JSON.parse(payload || "");
 
-  console.log(`${method} ${new URL(url).pathname}`);
+  // console.log(`${method} ${new URL(url).pathname}`);
   const res = await fetch(input, init);
   console.log(
     `${method} ${new URL(url).pathname}} response status: ${res.status} ${res.statusText})`
