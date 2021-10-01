@@ -30,7 +30,7 @@ async function wrappedFetch(input: Request | URL | string, init?: RequestInit): 
   console.log(`${method} ${new URL(url).pathname}`);
   const res = await fetch(input, init);
   console.log(
-    `${method} ${new URL(url).pathname}} response status: ${res.status} ${res.statusText})`
+    `${method} ${new URL(url).pathname}} response status: ${res.type} ${res.type})`
   );
   if (!res.ok) {
     console.log({ payload: payload, response: await res.text() });
@@ -204,4 +204,31 @@ async function parseJSONOrShowText(res: Response) {
     console.error("failed to parse json: ", await res.text());
     throw exception;
   }
+}
+
+export async function confirmAppointment(code: string, context: AppointmentLockedContext) {
+  const res = await wrappedFetch("https://onlinebusiness.icbc.com/deas-api/v1/web/sendOTP", {
+    headers: {
+      accept: "application/json, text/plain, */*",
+      "accept-language": "en-US,en;q=0.9",
+      authorization: context.bearerToken,
+      "content-type": "application/json",
+      "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"Linux"',
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+    },
+    referrer: "https://onlinebusiness.icbc.com/webdeas-ui/booking",
+    referrerPolicy: "strict-origin-when-cross-origin",
+    body: JSON.stringify({
+      bookedTs: context.lockedAppointment.bookedTs,
+      drvrID: context.lockedAppointment.drvrDriver.drvrId,
+      code,
+    }),
+    method: "POST",
+    mode: "cors",
+    credentials: "include",
+  });
 }

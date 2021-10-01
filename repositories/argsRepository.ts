@@ -19,7 +19,8 @@ const PROFILE_PROPERTIES_OPT: (keyof RawProfile)[] = [
   "stopSearchOnConfirmation",
   "webPort",
   "pollOnce",
-  "pollInterval"
+  "pollInterval",
+  "environment"
 ];
 
 const PROFILE_PROPERTIES: (keyof RawProfile)[] = [
@@ -32,42 +33,42 @@ export async function parseProfileArgs(args: ProfileArgs): Promise<Profile> {
   console.log({args});
   if (args.configPath) {
     profile = normalizeProfileInput(await readJsonFile<Profile>(args.configPath));
-    assertProfileValid(profile);
   }
 
   if (args.configJson) {
     profile = normalizeProfileInput(JSON.parse(args.configJson));
-    assertProfileValid(profile);
   }
 
-  {
-    const argsProfile: any = {};
-    for (let [k, v] of Object.entries(args).filter(([k]) => PROFILE_PROPERTIES.includes(k as keyof RawProfile))) {
-      argsProfile[k] = v;
-    }
-    console.log({argsProfile, profile});
-    profile = { ...profile, ...normalizeProfileInput(argsProfile) };
-    assertProfileValid(profile);
+  const argsProfile: any = {};
+  for (let [k, v] of Object.entries(args).filter(([k]) => PROFILE_PROPERTIES.includes(k as keyof RawProfile))) {
+    argsProfile[k] = v;
+  }
+  console.log({argsProfile, profile});
+  profile = { ...profile, ...normalizeProfileInput(argsProfile) };
+  if (!profile) {
+    throw new Error();
   }
 
-  return profile as Profile;
+  assertProfileValid(profile);
+  const withDefaults = applyDefaults(profile);
+
+  return withDefaults as Profile;
 }
 
 function normalizeProfileInput(rawProfile: RawProfile) {
   const normalized: any = {};
-  for (const k of PROFILE_PROPERTIES) {
+  for (let k of PROFILE_PROPERTIES) {
     let v = rawProfile[k];
     if (typeof v == "undefined") {
       continue;
     }
     if (typeof v == "string") {
       normalized[k] = normalizeStringInput(v);
+      continue;
     }
     normalized[k] = v;
   }
-
-  const profile = applyDefaults(normalized as Profile);
-  return profile;
+  return normalized as Profile
 }
 
 function normalizeStringInput(str: string) {

@@ -36,10 +36,10 @@ async function fetchAndBookAppointments(eventService: EventService) {
   let loginContext: LoginContext;
   {
     const state = eventService.state$.state;
-    switch (state.status) {
+    switch (state.type) {
       case "base":
         loginContext = await Api.login(state.context.profile);
-        eventService.state$.post({ status: "loggedIn", context: loginContext });
+        eventService.state$.post({ type: "loggedIn", context: loginContext });
         break;
       case "appointmentLocked":
         // check to see if we should stop searching, otherwise intentionally fall through to loginContext
@@ -63,7 +63,7 @@ async function fetchAndBookAppointments(eventService: EventService) {
   const newAppointment = appointments[0];
   {
     const state = eventService.state$.state;
-    switch (state.status) {
+    switch (state.type) {
       case "appointmentLocked":
         const existingAppointment = state.context.availableAppointment;
         const chosen: AvailableAppointment = [existingAppointment, newAppointment].sort(
@@ -82,7 +82,7 @@ async function fetchAndBookAppointments(eventService: EventService) {
   const lockedAppointment = await Api.lockAppointment(bookingContext)
   const ctx: AppointmentLockedContext = { ...bookingContext, lockedAppointment };
   await Api.sendOTP(ctx)
-  eventService.state$.post({ status: "appointmentLocked", context: ctx });
+  eventService.state$.post({ type: "appointmentLocked", context: ctx });
 }
 
 async function fetchCompatibleAppointments(ctx: LoginContext) {

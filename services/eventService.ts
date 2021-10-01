@@ -8,7 +8,7 @@ export class EventService {
 
   constructor(baseContext: BaseContext) {
     this.state$ = new StatefulEvt<State>({
-      status: "base",
+      type: "base",
       context: baseContext,
     });
     this.isPolling$ = new StatefulEvt<boolean>(false);

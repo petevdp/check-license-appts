@@ -23,13 +23,13 @@ export interface AppointmentLockedContext extends BookingContext {
 
 
 export type State = {
-  status: "base"
+  type: "base"
   context: BaseContext;
 } | {
-  status: "loggedIn"
+  type: "loggedIn"
   context: LoginContext;
 } | {
-  status: "appointmentLocked"
+  type: "appointmentLocked"
   context: AppointmentLockedContext;
 }
 
