@@ -1,4 +1,5 @@
 import { Application } from "https://deno.land/x/abc@v1.3.3/mod.ts";
+import { htmlBundle } from "../public/html.ts";
 import { combineLatest } from "../repositories/evtRepository.ts";
 import { LockedAppointment } from "../types/appointment/LockedAppointment.ts";
 import * as Eta from "https://deno.land/x/eta@v1.6.0/mod.ts";
@@ -57,7 +58,10 @@ export class WebService {
             const state = this.eventService.state$.state;
             if (state.type === "appointmentLocked") {
               await Api.confirmAppointment(event.code, state.context);
-              this.eventService.state$.post({type: "appointmentConfirmed", context: state.context})
+              this.eventService.state$.post({
+                type: "appointmentConfirmed",
+                context: state.context,
+              });
             } else {
               console.warn(`tried to submit code during invalid state '${state.type}'`);
             }
@@ -83,10 +87,19 @@ export class WebService {
   }
 
   startServer() {
-    this.app
-      .use(logger())
-      .file("/", "./public/index.html")
-      .start({ port: this.eventService.state$.state.context.profile.webPort });
+    this.app.use(logger());
+
+    switch (this.eventService.state$.state.context.profile.environment) {
+      case "development":
+        this.app.file("/", "./public/index.html");
+        break;
+      case "production":
+        this.app.get("/", (req) => {
+          req.html(htmlBundle, 200);
+        });
+    }
+
+    this.app.start({ port: this.eventService.state$.state.context.profile.webPort });
   }
 }
 
@@ -107,10 +120,10 @@ function getServerEventFromStateChange(curr: State, prev: State): [ServerEvent] 
       {
         type: "appointmentConfirmed",
         appointment: getClientSideAppointment(curr.context.lockedAppointment),
-      }
+      },
     ];
-  } 
-  
+  }
+
   return null;
 }
 
