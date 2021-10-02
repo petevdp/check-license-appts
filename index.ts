@@ -1,5 +1,3 @@
-import { parse } from "https://deno.land/std/flags/mod.ts";
-import { ProfileArgs } from "./types/Args.ts";
 import { pollAppointments } from "./pollAppointments.ts";
 import { EventService } from "./services/eventService.ts";
 import { parseArgs } from "./repositories/argsRepository.ts";
