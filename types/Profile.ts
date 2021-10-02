@@ -1,6 +1,5 @@
 export interface RawProfile {
   smtpSenderEmail: string;
-  name: string;
   lastname: string;
   licenseNumber: number;
   keyword: string;

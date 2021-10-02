@@ -1,10 +1,10 @@
-import { PROFILE_DEFAULTS } from "../constants.ts";
+import { PROFILE_DEFAULTS, VERSION } from "../constants.ts";
 import { ProfileArgs } from "../types/Args.ts";
 import { Profile, RawProfile } from "../types/Profile.ts";
-import JSON5 from "https://deno.land/x/json5";
+import { cac } from "https://unpkg.com/cac/mod.ts";
+import JSON5 from "https://raw.githubusercontent.com/DevSnowflake/json5/main/mod.ts";
 
 const PROFILE_PROPERTIES_REQ: (keyof RawProfile)[] = [
-  "name",
   "lastname",
   "licenseNumber",
   "keyword",
@@ -21,7 +21,9 @@ const PROFILE_PROPERTIES_OPT: (keyof RawProfile)[] = [
   "webPort",
   "pollOnce",
   "pollInterval",
-  "environment"
+  "environment",
+  "noBooking",
+  "noOpen",
 ];
 
 const PROFILE_PROPERTIES: (keyof RawProfile)[] = [
@@ -29,34 +31,25 @@ const PROFILE_PROPERTIES: (keyof RawProfile)[] = [
   ...PROFILE_PROPERTIES_REQ,
 ];
 
-export async function parseProfileArgs(args: ProfileArgs): Promise<Profile> {
-  let profile: Profile | null = null;
-  if (args.configPath) {
-    let rawProfile: RawProfile;
-    if (args.configPath.endsWith('.json')) {
-      rawProfile = await readJsonFile<Profile>(args.configPath);
-    } else if (args.configPath.endsWith('.json5')) {
-      rawProfile = await readJson5File<Profile>(args.configPath);
-    }
+export function parseArgs(): Profile {
+  const cli = cac("check-licence-appts");
+  cli.version(VERSION);
+  cli.help();
+  cli.usage("check-licence-appts [options]");
+  cli.option("--profile-path [profile-path]", "path to configured profile", {
+    default: "profile.json5",
+  });
+  const parsed = cli.parse();
+  console.debug({ parsed });
+  if (parsed.options.help || parsed.options.version) {
+    Deno.exit();
   }
 
-  if (args.configJson) {
-    profile = normalizeProfileInput(JSON.parse(args.configJson));
-  }
-
-  const argsProfile: any = {};
-  for (let [k, v] of Object.entries(args).filter(([k]) => PROFILE_PROPERTIES.includes(k as keyof RawProfile))) {
-    argsProfile[k] = v;
-  }
-  profile = { ...profile, ...normalizeProfileInput(argsProfile) };
-  if (!profile) {
-    throw new Error();
-  }
-
+  let rawProfile: RawProfile = readConfigFile<RawProfile>(parsed.options.profilePath);
+  let profile = normalizeProfileInput(rawProfile);
+  profile = applyDefaults(profile);
   assertProfileValid(profile);
-  const withDefaults = applyDefaults(profile);
-
-  return withDefaults as Profile;
+  return profile;
 }
 
 function normalizeProfileInput(rawProfile: RawProfile) {
@@ -72,7 +65,7 @@ function normalizeProfileInput(rawProfile: RawProfile) {
     }
     normalized[k] = v;
   }
-  return normalized as Profile
+  return normalized as Profile;
 }
 
 function normalizeStringInput(str: string) {
@@ -80,25 +73,30 @@ function normalizeStringInput(str: string) {
 }
 
 function assertProfileValid(profile: Profile) {
-  const missing = PROFILE_PROPERTIES_REQ.filter((property) => typeof profile[property] === "undefined");
+  const missing = PROFILE_PROPERTIES_REQ.filter(
+    (property) => typeof profile[property] === "undefined"
+  );
   if (missing.length > 0) {
     throw new Error("invalid profile: missing properties " + missing.join(","));
   }
 }
 
-function readJsonFile<T>(configPath: string): Promise<T> {
-  return Deno.readTextFile(configPath).then((text) => JSON.parse(text) as T);
-}
-
-function readJson5File<T>(configPath: string): Promise<T> {
-  return Deno.readTextFile(configPath).then((text) => JSON5.parse(text) as T);
+function readConfigFile<T>(configPath: string): T {
+  const text = Deno.readTextFileSync(configPath);
+  if (configPath.endsWith(".json5")) {
+    return JSON5.parse(text);
+  }
+  if (configPath.endsWith(".json")) {
+    return JSON.parse(text);
+  }
+  throw new Error("unknown config file type" + configPath);
 }
 
 function applyDefaults(profile: Profile) {
-  for (const [k,v] of Object.entries(PROFILE_DEFAULTS)) {
+  for (const [k, v] of Object.entries(PROFILE_DEFAULTS)) {
     const key = k as keyof Profile;
     if (typeof profile[key] === "undefined") {
-      profile = {...profile, [key]: v};
+      profile = { ...profile, [key]: v };
     }
   }
   return profile;

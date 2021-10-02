@@ -1,0 +1,28 @@
+{
+  // last name recorded with icbc
+  lastname: "lastname",
+  licenseNumber: "1111111",
+  // your security keyword from icbc
+  keyword: "<",
+  // email must be registered with ICBC
+  email: "teat@test.com",
+
+  // learners exampType
+  examType: "7-R-1",
+
+  // posIds of icbc locations we can access
+  locationsToCheck: [114, 241, 209],
+
+  // exam windo
+  earliestExamDate: "2021-09-27",
+  latestExamDate: "2022-12-30",
+
+  // how long should we wait before polling for appointments
+  pollInterval: "500ms",
+
+  // don't open the webpage when the script starts
+  noOpen: false,
+
+  // which port to open the webpage on
+  webPort: 3000
+}
