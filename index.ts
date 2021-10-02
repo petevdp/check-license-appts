@@ -6,8 +6,7 @@ import { parseArgs } from "./repositories/argsRepository.ts";
 import { opn } from "https://denopkg.com/hashrock/deno-opn/opn.ts";
 import { WebService } from "./services/webService.ts";
 
-async function main() {
-  const rawArgs = parse(Deno.args);
+function main() {
   const profile = parseArgs();
   const eventService = new EventService({ profile });
   const webService = new WebService(eventService);

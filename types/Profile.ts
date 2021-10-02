@@ -16,7 +16,7 @@ export interface RawProfile {
   pollInterval?: string;
   environment?: "production" | "development";
   noBooking?: boolean;
-  noOpen?: boolean,
+  noOpen?: boolean;
 }
 
 export interface Profile extends RawProfile {

@@ -1,5 +1,4 @@
 import { PROFILE_DEFAULTS, VERSION } from "../constants.ts";
-import { ProfileArgs } from "../types/Args.ts";
 import { Profile, RawProfile } from "../types/Profile.ts";
 import { cac } from "https://unpkg.com/cac/mod.ts";
 import JSON5 from "https://raw.githubusercontent.com/DevSnowflake/json5/main/mod.ts";
@@ -45,7 +44,9 @@ export function parseArgs(): Profile {
     Deno.exit();
   }
 
-  let rawProfile: RawProfile = readConfigFile<RawProfile>(parsed.options.profilePath);
+  const rawProfile: RawProfile = readConfigFile<RawProfile>(
+    parsed.options.profilePath,
+  );
   let profile = normalizeProfileInput(rawProfile);
   profile = applyDefaults(profile);
   assertProfileValid(profile);
@@ -54,8 +55,8 @@ export function parseArgs(): Profile {
 
 function normalizeProfileInput(rawProfile: RawProfile) {
   const normalized: any = {};
-  for (let k of PROFILE_PROPERTIES) {
-    let v = rawProfile[k];
+  for (const k of PROFILE_PROPERTIES) {
+    const v = rawProfile[k];
     if (typeof v == "undefined") {
       continue;
     }
@@ -74,7 +75,7 @@ function normalizeStringInput(str: string) {
 
 function assertProfileValid(profile: Profile) {
   const missing = PROFILE_PROPERTIES_REQ.filter(
-    (property) => typeof profile[property] === "undefined"
+    (property) => typeof profile[property] === "undefined",
   );
   if (missing.length > 0) {
     throw new Error("invalid profile: missing properties " + missing.join(","));

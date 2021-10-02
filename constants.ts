@@ -12,4 +12,4 @@ export const PROFILE_DEFAULTS = {
   environment: "production",
   noBooking: false,
   noOpen: false,
-}
+};

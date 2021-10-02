@@ -1,8 +1,8 @@
 export type ClientEvent =
   | {
-      type: "codeSubmission";
-      code: string;
-    }
+    type: "codeSubmission";
+    code: string;
+  }
   | {
-      type: "stopSearch";
-    };
+    type: "stopSearch";
+  };

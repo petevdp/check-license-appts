@@ -3,7 +3,6 @@ import { Profile } from "./Profile.ts";
 import { Driver } from "./Driver.ts";
 import { LockedAppointment } from "./appointment/LockedAppointment.ts";
 
-
 export interface BaseContext {
   profile: Profile;
 }
@@ -21,18 +20,16 @@ export interface AppointmentLockedContext extends BookingContext {
   lockedAppointment: LockedAppointment;
 }
 
-
 export type State = {
-  type: "base"
+  type: "base";
   context: BaseContext;
 } | {
-  type: "loggedIn"
+  type: "loggedIn";
   context: LoginContext;
 } | {
-  type: "appointmentLocked"
+  type: "appointmentLocked";
   context: AppointmentLockedContext;
 } | {
-  type: "appointmentConfirmed",
+  type: "appointmentConfirmed";
   context: AppointmentLockedContext;
-}
-
+};

@@ -3,27 +3,27 @@ import { ClientSideAppointment } from "../appointment/ClientSideAppointment.ts";
 
 export type AppointmentState =
   | {
-      state: "found" | "booked";
-      appointment: ClientSideAppointment;
-    }
+    state: "found" | "booked";
+    appointment: ClientSideAppointment;
+  }
   | {
-      state: "notFound";
-    };
+    state: "notFound";
+  };
 
 export type ServerEvent =
   | {
-      type: "pollingStopped";
-    }
+    type: "pollingStopped";
+  }
   | {
-      type: "appointmentFound";
-      appointment: ClientSideAppointment;
-    }
+    type: "appointmentFound";
+    appointment: ClientSideAppointment;
+  }
   | {
-      type: "appointmentConfirmed";
-      appointment: ClientSideAppointment;
-    }
+    type: "appointmentConfirmed";
+    appointment: ClientSideAppointment;
+  }
   | {
-      type: "init";
-      isPolling: boolean;
-      appointmentState: AppointmentState;
-    };
+    type: "init";
+    isPolling: boolean;
+    appointmentState: AppointmentState;
+  };

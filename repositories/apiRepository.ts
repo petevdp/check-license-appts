@@ -1,10 +1,12 @@
-import { AllLoginInfo } from "../AllLoginInfo.ts";
-import { dateToString, utcDate } from "https://deno.land/x/date_format_deno/mod.ts";
-import { LoginResponse } from "../types/api/login/loginResponse.ts";
+import { dateToString } from "https://deno.land/x/date_format_deno/mod.ts";
 import { GetAvailableAppointmentsPayload } from "../types/api/getAvailableAppointments/GetAvailableAppointmentsPayload.ts";
 import { GetAvailableAppointmentsResponse } from "../types/api/getAvailableAppointments/GetAvailableAppointmentsResponse.ts";
 import { Profile } from "../types/Profile.ts";
-import { AppointmentLockedContext, BookingContext, LoginContext } from "../types/contexts.ts";
+import {
+  AppointmentLockedContext,
+  BookingContext,
+  LoginContext,
+} from "../types/contexts.ts";
 import { Driver } from "../types/Driver.ts";
 import { LockedAppointment } from "../types/appointment/LockedAppointment.ts";
 import { LockPayload } from "../types/api/lock/LockPayload.ts";
@@ -39,9 +41,9 @@ export async function login(profile: Profile): Promise<LoginContext> {
 
 export async function getAvailableAppointments(
   payload: GetAvailableAppointmentsPayload,
-  bearerToken: string
+  bearerToken: string,
 ): Promise<GetAvailableAppointmentsResponse> {
-  const body: any = {
+  const body = {
     ...payload,
     ...{
       prfDaysOfWeek: `[${payload.prfDaysOfWeek.join(",")}]`,
@@ -80,7 +82,9 @@ export async function sendMsgs(ctx: BookingContext) {
   });
 }
 
-export async function lockAppointment(ctx: BookingContext): Promise<LockedAppointment> {
+export async function lockAppointment(
+  ctx: BookingContext,
+): Promise<LockedAppointment> {
   const body: LockPayload = {
     appointmentDt: ctx.availableAppointment.appointmentDt,
     dlExam: ctx.availableAppointment.dlExam,
@@ -109,7 +113,7 @@ export async function lockAppointment(ctx: BookingContext): Promise<LockedAppoin
 }
 
 export async function sendOTP(ctx: AppointmentLockedContext) {
-  const res = await wrappedFetch(getUrl("/web/sendOTP"), {
+  await wrappedFetch(getUrl("/web/sendOTP"), {
     ...getStandardFetchInit(),
     headers: {
       ...getStandardHeaders(),
@@ -125,8 +129,11 @@ export async function sendOTP(ctx: AppointmentLockedContext) {
   });
 }
 
-export async function confirmAppointment(code: string, context: AppointmentLockedContext) {
-  const res = await wrappedFetch(getUrl("/web/sendOTP"), {
+export async function confirmAppointment(
+  code: string,
+  context: AppointmentLockedContext,
+) {
+  await wrappedFetch(getUrl("/web/sendOTP"), {
     ...getStandardFetchInit(),
     headers: {
       ...getStandardHeaders(),
@@ -143,10 +150,14 @@ export async function confirmAppointment(code: string, context: AppointmentLocke
 }
 
 function getUrl(path: string) {
-  return new URL("https://onlinebusiness.icbc.com/deas-api/v1").toString() + path;
+  return new URL("https://onlinebusiness.icbc.com/deas-api/v1").toString() +
+    path;
 }
 
-async function wrappedFetch(input: Request | URL | string, init?: RequestInit): Promise<Response> {
+async function wrappedFetch(
+  input: Request | URL | string,
+  init?: RequestInit,
+): Promise<Response> {
   let url: string;
   let method: string | undefined;
   let payload: string | undefined;
@@ -165,7 +176,9 @@ async function wrappedFetch(input: Request | URL | string, init?: RequestInit): 
   // console.log(`${method} ${new URL(url).pathname}`);
   const res = await fetch(input, init);
   console.log(
-    `${method} ${new URL(url).pathname}} response status: ${res.status} ${res.statusText})`
+    `${method} ${
+      new URL(url).pathname
+    }} response status: ${res.status} ${res.statusText})`,
   );
   if (!res.ok) {
     console.log({ payload: payload, response: await res.text() });
@@ -190,7 +203,7 @@ function getStandardFetchInit(): RequestInit {
 }
 
 function formatTimestamp(ts: Date) {
-  return dateToString("yyyy-MM-ddThh:mm:ss", new Date());
+  return dateToString("yyyy-MM-ddThh:mm:ss", ts);
 }
 
 async function parseJSONOrShowText(res: Response) {

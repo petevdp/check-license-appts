@@ -2,7 +2,7 @@ export function parseTimeToMs(timeStr: string): number {
   if (timeStr.length <= 1) {
     throw new Error(`Could not parse time string ${timeStr}`);
   }
-  let raw = Number(timeStr.slice(0, timeStr.length - 1));
+  const raw = Number(timeStr.slice(0, timeStr.length - 1));
   if (timeStr.endsWith("ms")) {
     return raw;
   }

@@ -1,17 +1,14 @@
 import { Profile } from "./types/Profile.ts";
 import * as Api from "./repositories/apiRepository.ts";
 import { GetAvailableAppointmentsPayload } from "./types/api/getAvailableAppointments/GetAvailableAppointmentsPayload.ts";
-import { GetAvailableAppointmentsResponse } from "./types/api/getAvailableAppointments/GetAvailableAppointmentsResponse.ts";
 import { AvailableAppointment } from "./types/appointment/AvailableAppointment.ts";
 import {
   AppointmentLockedContext,
-  BaseContext,
   BookingContext,
   LoginContext,
 } from "./types/contexts.ts";
-import { LockedAppointment } from "./types/appointment/LockedAppointment.ts";
 import { EventService } from "./services/eventService.ts";
-import { parseTimeToMs, later } from "./repositories/timeRepository.ts";
+import { later, parseTimeToMs } from "./repositories/timeRepository.ts";
 
 export async function pollAppointments(eventService: EventService) {
   const ctx = eventService.state$.state.context;
@@ -47,14 +44,16 @@ async function fetchAndBookAppointments(eventService: EventService) {
           eventService.isPolling$.post(false);
           return;
         }
+        loginContext = state.context;
+        break;
       case "loggedIn":
       case "appointmentConfirmed":
         loginContext = state.context;
         break;
     }
   }
-  let appointments = (await fetchCompatibleAppointments(loginContext)).sort(
-    compareAppointments(loginContext.profile)
+  const appointments = (await fetchCompatibleAppointments(loginContext)).sort(
+    compareAppointments(loginContext.profile),
   );
   if (appointments.length == 0) {
     console.log("No suitable appointments found");
@@ -65,23 +64,31 @@ async function fetchAndBookAppointments(eventService: EventService) {
   {
     const state = eventService.state$.state;
     switch (state.type) {
-      case "appointmentLocked":
+      case "appointmentLocked": {
         const existingAppointment = state.context.availableAppointment;
-        const chosen: AvailableAppointment = [existingAppointment, newAppointment].sort(
-          compareAppointments(loginContext.profile)
-        )[0];
+        const chosen: AvailableAppointment =
+          [existingAppointment, newAppointment].sort(
+            compareAppointments(loginContext.profile),
+          )[0];
         if (Object.is(chosen, existingAppointment)) {
           console.log("Keeping existing locked appointment");
           return;
         }
         console.log("Using new appointment");
         break;
+      }
     }
   }
 
-  const bookingContext: BookingContext = { ...loginContext, availableAppointment: appointments[0] };
+  const bookingContext: BookingContext = {
+    ...loginContext,
+    availableAppointment: appointments[0],
+  };
   const lockedAppointment = await Api.lockAppointment(bookingContext);
-  const ctx: AppointmentLockedContext = { ...bookingContext, lockedAppointment };
+  const ctx: AppointmentLockedContext = {
+    ...bookingContext,
+    lockedAppointment,
+  };
   if (!bookingContext.profile.noBooking) {
     await Api.sendOTP(ctx);
   }
@@ -103,9 +110,9 @@ async function fetchCompatibleAppointments(ctx: LoginContext) {
     ctx.profile.locationsToCheck.map((location) =>
       Api.getAvailableAppointments(
         { ...baseAppointmentQueryPayload, aPosID: location },
-        ctx.bearerToken
+        ctx.bearerToken,
       )
-    )
+    ),
   ).then((appts) => appts.flat());
   return [...allAvailableAppointments].filter((appointment) => {
     const date = Number(new Date(appointment.appointmentDt.date));
@@ -115,8 +122,7 @@ async function fetchCompatibleAppointments(ctx: LoginContext) {
   });
 }
 
-const compareAppointments =
-  (profile: Profile) =>
+const compareAppointments = (profile: Profile) =>
   (a1: AvailableAppointment, a2: AvailableAppointment): number => {
     if (a1.appointmentDt.date !== a2.appointmentDt.date) {
       return Number(a1.appointmentDt.date) - Number(a2.appointmentDt.date);
@@ -137,12 +143,3 @@ const compareAppointments =
     console.warn("unmatched locIds from appointments ", a1, a2);
     return 0;
   };
-
-
-function linkVerificationUrl(ctx: BookingContext) {
-  console.log(
-    `Appointment found at ${new Date(
-      ctx.availableAppointment.appointmentDt.date
-    ).toLocaleDateString()}. You should receive a one-time passcode from icbc.\nWhen you get this passcode open up http://localhost:{}`
-  );
-}

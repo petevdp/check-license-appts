@@ -1,5 +1,5 @@
 export interface DLExam {
-  code:        Code;
+  code: Code;
   description: Description;
 }
 

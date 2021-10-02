@@ -1,13 +1,14 @@
 import { Application } from "https://deno.land/x/abc@v1.3.3/mod.ts";
 import { htmlBundle } from "../public/html.ts";
-import { combineLatest } from "../repositories/evtRepository.ts";
 import { LockedAppointment } from "../types/appointment/LockedAppointment.ts";
-import * as Eta from "https://deno.land/x/eta@v1.6.0/mod.ts";
 import * as Api from "../repositories/apiRepository.ts";
 import { State } from "../types/contexts.ts";
 import { EventService } from "./eventService.ts";
 import { logger } from "https://deno.land/x/abc@v1.3.3/middleware/logger.ts";
-import { WebSocketClient, WebSocketServer } from "https://deno.land/x/websocket@v0.1.3/mod.ts";
+import {
+  WebSocketClient,
+  WebSocketServer,
+} from "https://deno.land/x/websocket@v0.1.3/mod.ts";
 import { Ctx, Evt } from "https://deno.land/x/evt@v1.10.1/mod.ts";
 import { AppointmentState, ServerEvent } from "../types/events/ServerEvent.ts";
 import { ClientEvent } from "../types/events/ClientEvent.ts";
@@ -51,10 +52,11 @@ export class WebService {
 
         console.log(event.type, ":", event);
         switch (event.type) {
-          case "stopSearch":
+          case "stopSearch": {
             this.eventService.isPolling$.post(false);
             break;
-          case "codeSubmission":
+          }
+          case "codeSubmission": {
             const state = this.eventService.state$.state;
             if (state.type === "appointmentLocked") {
               await Api.confirmAppointment(event.code, state.context);
@@ -63,9 +65,12 @@ export class WebService {
                 context: state.context,
               });
             } else {
-              console.warn(`tried to submit code during invalid state '${state.type}'`);
+              console.warn(
+                `tried to submit code during invalid state '${state.type}'`,
+              );
             }
             break;
+          }
         }
       });
 
@@ -80,7 +85,9 @@ export class WebService {
       const initEvent: ServerEvent = {
         type: "init",
         isPolling: this.eventService.isPolling$.state,
-        appointmentState: selectAppointmentState(this.eventService.state$.state),
+        appointmentState: selectAppointmentState(
+          this.eventService.state$.state,
+        ),
       };
       serverEvent$.post(initEvent);
     });
@@ -99,11 +106,16 @@ export class WebService {
         });
     }
 
-    this.app.start({ port: this.eventService.state$.state.context.profile.webPort });
+    this.app.start({
+      port: this.eventService.state$.state.context.profile.webPort,
+    });
   }
 }
 
-function getServerEventFromStateChange(curr: State, prev: State): [ServerEvent] | null {
+function getServerEventFromStateChange(
+  curr: State,
+  prev: State,
+): [ServerEvent] | null {
   if (curr.type === prev.type) {
     return null;
   }
@@ -127,7 +139,9 @@ function getServerEventFromStateChange(curr: State, prev: State): [ServerEvent] 
   return null;
 }
 
-function getClientSideAppointment(appointment: LockedAppointment): ClientSideAppointment {
+function getClientSideAppointment(
+  appointment: LockedAppointment,
+): ClientSideAppointment {
   return {
     type: appointment.dlExam.code,
     date: appointment.appointmentDt.date,

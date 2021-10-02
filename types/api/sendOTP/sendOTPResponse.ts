@@ -1,4 +1,4 @@
 export interface SendOTPResponse {
-  code:        string;
+  code: string;
   description: string;
 }

@@ -1,6 +1,5 @@
 import { BaseContext, State } from "../types/contexts.ts";
-import { Evt, StatefulEvt } from "https://deno.land/x/evt/mod.ts";
-import { parseTimeToMs } from "../repositories/timeRepository.ts";
+import { StatefulEvt } from "https://deno.land/x/evt/mod.ts";
 
 export class EventService {
   public state$: StatefulEvt<State>;
