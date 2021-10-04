@@ -64,6 +64,7 @@ async function fetchAndBookAppointments(eventService: EventService) {
   {
     const state = eventService.state$.state;
     switch (state.type) {
+      case "appointmentConfirmed":
       case "appointmentLocked": {
         const existingAppointment = state.context.availableAppointment;
         const chosen: AvailableAppointment =

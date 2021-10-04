@@ -5,10 +5,7 @@ import * as Api from "../repositories/apiRepository.ts";
 import { State } from "../types/contexts.ts";
 import { EventService } from "./eventService.ts";
 import { logger } from "https://deno.land/x/abc@v1.3.3/middleware/logger.ts";
-import {
-  WebSocketClient,
-  WebSocketServer,
-} from "https://deno.land/x/websocket@v0.1.3/mod.ts";
+import { WebSocketClient, WebSocketServer } from "https://deno.land/x/websocket@v0.1.3/mod.ts";
 import { Ctx, Evt } from "https://deno.land/x/evt@v1.10.1/mod.ts";
 import { AppointmentState, ServerEvent } from "../types/events/ServerEvent.ts";
 import { ClientEvent } from "../types/events/ClientEvent.ts";
@@ -60,14 +57,16 @@ export class WebService {
             const state = this.eventService.state$.state;
             if (state.type === "appointmentLocked") {
               await Api.confirmAppointment(event.code, state.context);
+              const {alreadyBooked} = await Api.bookAppointment(state.context);
+              if (alreadyBooked) {
+                throw "wat do";
+              }
               this.eventService.state$.post({
                 type: "appointmentConfirmed",
                 context: state.context,
               });
             } else {
-              console.warn(
-                `tried to submit code during invalid state '${state.type}'`,
-              );
+              console.warn(`tried to submit code during invalid state '${state.type}'`);
             }
             break;
           }
@@ -85,9 +84,7 @@ export class WebService {
       const initEvent: ServerEvent = {
         type: "init",
         isPolling: this.eventService.isPolling$.state,
-        appointmentState: selectAppointmentState(
-          this.eventService.state$.state,
-        ),
+        appointmentState: selectAppointmentState(this.eventService.state$.state),
       };
       serverEvent$.post(initEvent);
     });
@@ -95,7 +92,7 @@ export class WebService {
 
   startServer() {
     this.app.use(logger());
-
+    console.log(this.eventService.state$.state.context.profile.environment);
     switch (this.eventService.state$.state.context.profile.environment) {
       case "development":
         this.app.file("/", "./public/index.html");
@@ -104,6 +101,7 @@ export class WebService {
         this.app.get("/", (req) => {
           req.html(htmlBundle, 200);
         });
+        break;
     }
 
     this.app.start({
@@ -112,10 +110,7 @@ export class WebService {
   }
 }
 
-function getServerEventFromStateChange(
-  curr: State,
-  prev: State,
-): [ServerEvent] | null {
+function getServerEventFromStateChange(curr: State, prev: State): [ServerEvent] | null {
   if (curr.type === prev.type) {
     return null;
   }
@@ -139,9 +134,7 @@ function getServerEventFromStateChange(
   return null;
 }
 
-function getClientSideAppointment(
-  appointment: LockedAppointment,
-): ClientSideAppointment {
+function getClientSideAppointment(appointment: LockedAppointment): ClientSideAppointment {
   return {
     type: appointment.dlExam.code,
     date: appointment.appointmentDt.date,
