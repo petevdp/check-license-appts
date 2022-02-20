@@ -17,6 +17,7 @@ export async function pollAppointments(eventService: EventService) {
     return;
   }
 
+  console.log("an")
   eventService.isPolling$.post(true);
   let epoch = 1n;
   const pollTimeMs = parseTimeToMs(ctx.profile.pollInterval);

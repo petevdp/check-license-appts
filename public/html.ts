@@ -198,19 +198,22 @@ export const htmlBundle = `<!DOCTYPE html>
         switch (serverEvent.type) {
           case "init":
             renderAppointmentStateChange(serverEvent.appointmentState);
-            renderSearchEltsChange(serverEvent.isPolling);
-            isPollingState = serverEvent.isPolling;
-            appointmentState = serverEvent.appointmentState;
+            renderSearchEltsChange(serverEvent.isPolling); isPollingState = serverEvent.isPolling;
+            handleTitleTextChange(serverEvent.appointmentState.state, serverEvent.isPolling);
+            storedAppointmentState = serverEvent.appointmentState;
             break;
           case "appointmentFound":
             handleTitleTextChange("found", isPollingState);
-            renderAppointmentStateChange({ state: "found", appointment: serverEvent.appointment });
+            storedAppointmentState = { state: "found", appointment: serverEvent.appointment };
+            renderAppointmentStateChange(appointmentState);
             break;
           case "appointmentConfirmed":
-            if (!storedAppointmentState) {
+            if (!storedAppointmentState || storedAppointmentState.state !== "found") {
               throw new Error("appointment state not set before booking");
             }
+            storedAppointmentState = { state: "booked", appointment: storedAppointmentState.appointment};
             handleTitleTextChange("booked", isPollingState);
+            renderAppointmentStateChange(storedAppointmentState);
             break;
           case "pollingStopped":
             renderSearchEltsChange(serverEvent.isPolling);
@@ -254,7 +257,14 @@ export const htmlBundle = `<!DOCTYPE html>
             setHidden(elts.appt.card);
             unsetHidden(cardSkeleton);
             break;
-          default:
+          case "found":
+            unsetHidden(elts.appt.card);
+            unsetHidden(elts.appt.codeForm);
+            setHidden(cardSkeleton);
+            renderAppointment(appointmentState.appointment);
+            break;
+          case "booked":
+            setHidden(elts.codeForm);
             unsetHidden(elts.appt.card);
             setHidden(cardSkeleton);
             renderAppointment(appointmentState.appointment);
@@ -276,10 +286,10 @@ export const htmlBundle = `<!DOCTYPE html>
       }
       function renderSearching(isSearching) {}
       function setHidden(elt) {
-        elt.classList.add("hidden");
+        elt?.classList?.add("hidden");
       }
       function unsetHidden(elt) {
-        elt.classList.remove("hidden");
+        elt?.classList?.remove("hidden");
       }
     </script>
   </body>

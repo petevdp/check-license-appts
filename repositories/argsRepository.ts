@@ -1,7 +1,7 @@
 import { PROFILE_DEFAULTS, VERSION } from "../constants.ts";
 import { Profile, RawProfile } from "../types/Profile.ts";
-import { cac } from "https://unpkg.com/cac/mod.ts";
-import JSON5 from "https://raw.githubusercontent.com/DevSnowflake/json5/main/mod.ts";
+import {Command} from "command"
+import JSON5 from "json5";
 
 const PROFILE_PROPERTIES_REQ: (keyof RawProfile)[] = [
   "lastname",
@@ -30,15 +30,15 @@ const PROFILE_PROPERTIES: (keyof RawProfile)[] = [
   ...PROFILE_PROPERTIES_REQ,
 ];
 
-export function parseArgs(): Profile {
-  const cli = cac("check-licence-appts");
+export async function parseArgs(): Promise<Profile> {
+  const cli = new Command()
+  cli.name("check-licence-appts");
   cli.version(VERSION);
-  cli.help();
-  cli.usage("check-licence-appts [options]");
-  cli.option("--profile-path [profile-path]", "path to configured profile", {
+  cli.description("Check for licence appointments in icbc");
+  cli.option("-p, --profile-path [profile-path]", "path to configured profile", {
     default: "profile.json5",
   });
-  const parsed = cli.parse();
+  const parsed = await cli.parse();
   console.debug({ parsed });
   if (parsed.options.help || parsed.options.version) {
     Deno.exit();

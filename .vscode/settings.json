@@ -3,5 +3,7 @@
   "editor.defaultFormatter": "denoland.vscode-deno",
   "deno.suggest.imports.hosts": {
     "https://d.land": false
-  }
+  },
+  "deno.lint": true,
+  "deno.importMap": "./import_map.json"
 }

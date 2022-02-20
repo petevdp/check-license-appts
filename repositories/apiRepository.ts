@@ -1,4 +1,4 @@
-import { dateToString } from "https://deno.land/x/date_format_deno/mod.ts";
+import { dateToString } from "date_format_deno";
 import { GetAvailableAppointmentsPayload } from "../types/api/getAvailableAppointments/GetAvailableAppointmentsPayload.ts";
 import { GetAvailableAppointmentsResponse } from "../types/api/getAvailableAppointments/GetAvailableAppointmentsResponse.ts";
 import { Profile } from "../types/Profile.ts";

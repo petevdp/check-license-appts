@@ -1,12 +1,13 @@
-import { Application } from "https://deno.land/x/abc@v1.3.3/mod.ts";
+import { Application } from "abc/mod.ts";
+import { WebSocketClient, WebSocketServer } from "websocket";
+import { Ctx, Evt } from "evt/mod.ts";
+import { logger } from "abc/middleware/logger.ts";
+
 import { htmlBundle } from "../public/html.ts";
 import { LockedAppointment } from "../types/appointment/LockedAppointment.ts";
 import * as Api from "../repositories/apiRepository.ts";
 import { State } from "../types/contexts.ts";
 import { EventService } from "./eventService.ts";
-import { logger } from "https://deno.land/x/abc@v1.3.3/middleware/logger.ts";
-import { WebSocketClient, WebSocketServer } from "https://deno.land/x/websocket@v0.1.3/mod.ts";
-import { Ctx, Evt } from "https://deno.land/x/evt@v1.10.1/mod.ts";
 import { AppointmentState, ServerEvent } from "../types/events/ServerEvent.ts";
 import { ClientEvent } from "../types/events/ClientEvent.ts";
 import { ClientSideAppointment } from "../types/appointment/ClientSideAppointment.ts";
@@ -26,13 +27,11 @@ export class WebService {
 
       const serverEvent$: Evt<ServerEvent> = Evt.merge(wsCtx, [
         this.eventService.state$
-          .toStateless(wsCtx)
           .pipe([
             (state, prev) => getServerEventFromStateChange(state, prev),
             this.eventService.state$.state,
           ]),
         this.eventService.isPolling$
-          .toStateless(wsCtx)
           .pipe((isPolling): [ServerEvent] | null =>
             isPolling ? null : [{ type: "pollingStopped" }]
           ),
@@ -57,7 +56,7 @@ export class WebService {
             const state = this.eventService.state$.state;
             if (state.type === "appointmentLocked") {
               await Api.confirmAppointment(event.code, state.context);
-              const {alreadyBooked} = await Api.bookAppointment(state.context);
+              const { alreadyBooked } = await Api.bookAppointment(state.context);
               if (alreadyBooked) {
                 throw "wat do";
               }
@@ -92,8 +91,9 @@ export class WebService {
 
   startServer() {
     this.app.use(logger());
-    console.log(this.eventService.state$.state.context.profile.environment);
-    switch (this.eventService.state$.state.context.profile.environment) {
+    const state = this.eventService.state$.state;
+    console.log({state});
+    switch (state.context.profile.environment) {
       case "development":
         this.app.file("/", "./public/index.html");
         break;

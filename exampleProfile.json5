@@ -13,7 +13,7 @@
   // posIds of icbc locations we can access
   locationsToCheck: [114, 241, 209],
 
-  // exam windo
+  // exam window
   earliestExamDate: "2021-09-27",
   latestExamDate: "2022-12-30",
 
